@@ -8,9 +8,9 @@ http:
     Accept:          "application/json"
     Content-Type:    "application/json"
     X-Test-Run:      "gatling"
-  connectTimeout:    5000
-  responseTimeout:   10000
   maxRedirects:      5
+  # Timeouts (connect, response) are not configurable here — set them in
+  # gatling.conf under gatling.http.ahc.connectTimeout / requestTimeout
 
 load:
   warmup:

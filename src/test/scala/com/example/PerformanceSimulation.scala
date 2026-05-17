@@ -1,6 +1,6 @@
 package com.example
 
-import com.example.config.{ScenarioConfig, SimulationConfig, TestConfig}
+import com.example.config.{ScenarioConfig, TestConfig}
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 

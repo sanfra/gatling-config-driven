@@ -77,7 +77,8 @@ object TestConfig {
   }
 
   private def collectSystemOverrides(): Map[String, String] = {
-    val knownPrefixes = Set("load.", "assertions.", "http.", "metadata.", "scenarios.")
+    // "scenarios." excluded — List fields can't be overridden via -D dot-notation
+    val knownPrefixes = Set("load.", "assertions.", "http.", "metadata.")
     sys.props.filter { case (k, _) => knownPrefixes.exists(k.startsWith) }.toMap
   }
 

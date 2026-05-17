@@ -12,13 +12,13 @@ case class SimulationConfig(
   metadata:   MetadataConfig
 )
 
+// connectTimeout and responseTimeout are not settable on the Gatling HTTP builder —
+// configure them in gatling.conf under gatling.http.ahc if needed.
 @JsonIgnoreProperties(ignoreUnknown = true)
 case class HttpConfig(
-  baseUrl:         String,
-  headers:         Map[String, String] = Map.empty,
-  connectTimeout:  Int                 = 5000,
-  responseTimeout: Int                 = 10000,
-  maxRedirects:    Int                 = 5
+  baseUrl:     String,
+  headers:     Map[String, String] = Map.empty,
+  maxRedirects: Int                = 5
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
