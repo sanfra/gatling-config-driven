@@ -1,0 +1,78 @@
+# Base configuration — loaded for every run.
+# Environment overrides: test-config-staging.yml, test-config-prod.yml
+# CLI overrides: mvn gatling:test -Dload.plateau.duration=300
+
+http:
+  baseUrl: "http://localhost:8000"
+  headers:
+    Accept:          "application/json"
+    Content-Type:    "application/json"
+    X-Test-Run:      "gatling"
+  connectTimeout:    5000
+  responseTimeout:   10000
+  maxRedirects:      5
+
+load:
+  warmup:
+    users:    10
+    duration: 20        # seconds
+
+  rampUp:
+    fromUsers: 10       # matches warmup.users
+    toUsers:   500
+    duration:  300      # 5 min
+
+  plateau:
+    users:    500       # must match rampUp.toUsers
+    duration: 600       # 10 min
+
+  rampDown:
+    fromUsers: 500      # must match plateau.users
+    toUsers:   0
+    duration:  300      # 5 min
+
+# Weights must sum to 100 across enabled scenarios
+scenarios:
+  - name:    "hello"
+    enabled: true
+    weight:  71
+    pause:
+      min:   800        # ms
+      max:   1200
+
+  - name:    "work"
+    enabled: true
+    weight:  24
+    pause:
+      min:   800
+      max:   1200
+    params:
+      delay: 0.2        # seconds of server-side delay
+
+  - name:    "error"
+    enabled: true
+    weight:  5
+    pause:
+      min:   2000
+      max:   4000
+
+assertions:
+  meanRtMaxMs:       500
+  p95RtMaxMs:        1000
+  p99RtMaxMs:        2000
+  maxRtMaxMs:        5000
+  minSuccessPercent: 95
+
+  # Per-scenario overrides (optional — falls back to global thresholds)
+  perScenario:
+    hello:
+      p95RtMaxMs:     500
+    work:
+      p95RtMaxMs:     1500   # work has a 0.2s delay — looser threshold
+    error:
+      successPercent: 100    # /api/fail must always respond (even as 500)
+
+metadata:
+  environment: "local"
+  version:     "dev"
+  branch:      "feature"

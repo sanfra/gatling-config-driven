@@ -1,0 +1,53 @@
+# Production overrides — smoke test only, keep load light.
+
+http:
+  baseUrl: "https://api.example.com"
+  headers:
+    X-Test-Run: "gatling-prod-smoke"
+
+load:
+  warmup:
+    users:    5
+    duration: 20
+
+  rampUp:
+    fromUsers: 5
+    toUsers:   50
+    duration:  60
+
+  plateau:
+    users:    50
+    duration: 120       # 2 min max on prod
+
+  rampDown:
+    fromUsers: 50
+    toUsers:   0
+    duration:  30
+
+# Only hello runs on prod — no error or delay endpoints
+scenarios:
+  - name:    "hello"
+    enabled: true
+    weight:  100
+    pause:
+      min:   1000
+      max:   2000
+
+  - name:    "work"
+    enabled: false
+    weight:  0
+
+  - name:    "error"
+    enabled: false
+    weight:  0
+
+assertions:
+  meanRtMaxMs:       300
+  p95RtMaxMs:        800
+  p99RtMaxMs:        1500
+  minSuccessPercent: 99   # zero tolerance on prod
+
+metadata:
+  environment: "production"
+  version:     "${VERSION:-unknown}"
+  branch:      "${BRANCH:-unknown}"

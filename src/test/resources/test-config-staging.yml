@@ -1,0 +1,35 @@
+# Staging overrides — merged on top of test-config.yml.
+# Only fields that differ from the base config are listed here.
+
+http:
+  baseUrl: "https://api-staging.example.com"
+
+load:
+  warmup:
+    users:    10
+    duration: 30
+
+  rampUp:
+    fromUsers: 10
+    toUsers:   300      # smaller than prod
+    duration:  180
+
+  plateau:
+    users:    300
+    duration: 600
+
+  rampDown:
+    fromUsers: 300
+    toUsers:   0
+    duration:  180
+
+assertions:
+  meanRtMaxMs:       800    # staging is slower — relaxed thresholds
+  p95RtMaxMs:        1500
+  p99RtMaxMs:        3000
+  minSuccessPercent: 95
+
+metadata:
+  environment: "staging"
+  version:     "${VERSION:-unknown}"   # injected by CI
+  branch:      "${BRANCH:-unknown}"
