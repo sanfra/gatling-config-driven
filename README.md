@@ -53,63 +53,60 @@ CLI overrides have the highest priority. Useful for quick smoke tests and CI par
 
 ## Config file structure
 
-```yaml
-http:
-  baseUrl: "http://localhost:8000"
-  headers:
-    Accept: "application/json"
-  connectTimeout:  5000
-  responseTimeout: 10000
+    http:
+      baseUrl: "http://localhost:8000"
+      headers:
+        Accept: "application/json"
+      maxRedirects: 5
 
-load:
-  warmup:
-    users:    10
-    duration: 20        # seconds
-  rampUp:
-    fromUsers: 10       # must match warmup.users
-    toUsers:   500
-    duration:  300
-  plateau:
-    users:    500       # must match rampUp.toUsers
-    duration: 600
-  rampDown:
-    fromUsers: 500      # must match plateau.users
-    toUsers:   0
-    duration:  300
+    load:
+      warmup:
+        users:    10
+        duration: 20        # seconds
+      rampUp:
+        fromUsers: 10       # must match warmup.users
+        toUsers:   500
+        duration:  300
+      plateau:
+        users:    500       # must match rampUp.toUsers
+        duration: 600
+      rampDown:
+        fromUsers: 500      # must match plateau.users
+        toUsers:   0
+        duration:  300
 
-scenarios:
-  - name:    "hello"
-    enabled: true
-    weight:  71         # weights of enabled scenarios must sum to 100
-    pause:
-      min:   800        # ms
-      max:   1200
-  - name:    "work"
-    enabled: true
-    weight:  24
-    params:
-      delay: "0.2"      # scenario-specific params
-  - name:    "error"
-    enabled: true
-    weight:  5
+    scenarios:
+      - name:    "hello"
+        enabled: true
+        weight:  71         # weights of enabled scenarios must sum to 100
+        pause:
+          min:   800        # ms
+          max:   1200
+      - name:    "work"
+        enabled: true
+        weight:  24
+        params:
+          delay: "0.2"      # scenario-specific params
+      - name:    "error"
+        enabled: true
+        weight:  5
 
-assertions:
-  meanRtMaxMs:       500
-  p95RtMaxMs:        1000
-  p99RtMaxMs:        2000
-  maxRtMaxMs:        5000
-  minSuccessPercent: 95
-  perScenario:              # optional per-scenario overrides
-    hello:
-      p95RtMaxMs: 500
-    error:
-      successPercent: 100   # /api/fail always responds — even as 500
+    assertions:
+      meanRtMaxMs:       500
+      p95RtMaxMs:        1000
+      p99RtMaxMs:        2000
+      maxRtMaxMs:        5000
+      minSuccessPercent: 95
+      perScenario:              # optional per-scenario overrides
+        hello:
+          p95RtMaxMs: 500
+        error:
+          successPercent: 100   # /api/fail always responds — even as 500
 
-metadata:
-  environment: "local"
-  version:     "dev"
-  branch:      "feature"
-```
+    metadata:
+      environment: "local"
+      version:     "dev"
+      branch:      "feature"
 
 The loader validates three consistency rules at startup and throws with a clear message if any fails:
 
@@ -117,35 +114,41 @@ The loader validates three consistency rules at startup and throws with a clear 
 - `rampDown.fromUsers` must equal `plateau.users`
 - Weights of enabled scenarios must sum to 100
 
+## Example endpoints
+
+The three built-in scenarios target a simple HTTP API:
+
+| Scenario | Endpoint | Expects |
+| --- | --- | --- |
+| `hello` | `GET /api/hello` | 200, JSON with `requestId` field |
+| `work` | `GET /api/work?delay=0.2` | 200, JSON with `result` field; simulates processing time |
+| `error` | `GET /api/fail` | 500, JSON with `error` field; verifies the endpoint always responds |
+
+Replace these with your own endpoints. The `work` scenario passes `#{requestId}` (saved by `hello`) as `X-Correlation-Id` — remove that header if you run `work` standalone.
+
 ## Adding a scenario
 
 1. Add the entry in `test-config.yml` (adjust weights to keep the sum at 100):
 
-```yaml
-scenarios:
-  - name:    "login"
-    enabled: true
-    weight:  15
-    params:
-      username: "testuser"
-```
+        scenarios:
+          - name:    "login"
+            enabled: true
+            weight:  15
+            params:
+              username: "testuser"
 
-2. Add the builder in `PerformanceSimulation.scala`:
+1. Add the builder in `PerformanceSimulation.scala`:
 
-```scala
-private def buildLoginScenario(sc: ScenarioConfig) =
-  scenario(sc.name)
-    .exec(http("login").post("/api/auth/login")
-      .check(status.is(200))
-      .check(jsonPath("$.token").saveAs("authToken")))
-    .pause(sc.pause.min.milliseconds, sc.pause.max.milliseconds)
-```
+        private def buildLoginScenario(sc: ScenarioConfig) =
+          scenario(sc.name)
+            .exec(http("login").post("/api/auth/login")
+              .check(status.is(200))
+              .check(jsonPath("$.token").saveAs("authToken")))
+            .pause(sc.pause.min.milliseconds, sc.pause.max.milliseconds)
 
-3. Wire it in `buildScenario`:
+1. Wire it in `buildScenario`:
 
-```scala
-case "login" => buildLoginScenario(sc)
-```
+        case "login" => buildLoginScenario(sc)
 
 No other changes needed.
 
@@ -153,17 +156,15 @@ No other changes needed.
 
 GitHub Actions:
 
-```yaml
-- name: Run performance test
-  env:
-    VERSION: ${{ github.ref_name }}
-    BRANCH:  ${{ github.ref_name }}
-  run: |
-    mvn gatling:test \
-      -Denv=staging \
-      -Dmetadata.version=$VERSION \
-      -Dmetadata.branch=$BRANCH
-```
+    - name: Run performance test
+      env:
+        VERSION: ${{ github.ref_name }}
+        BRANCH:  ${{ github.ref_name }}
+      run: |
+        mvn gatling:test \
+          -Denv=staging \
+          -Dmetadata.version=$VERSION \
+          -Dmetadata.branch=$BRANCH
 
 ## License
 
