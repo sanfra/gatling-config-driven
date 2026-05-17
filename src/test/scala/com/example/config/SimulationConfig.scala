@@ -26,7 +26,7 @@ case class LoadConfig(
   warmup:   WarmupConfig,
   rampUp:   RampConfig,
   plateau:  PlateauConfig,
-  rampDown: RampDownConfig
+  rampDown: RampConfig
 ) {
   def totalDurationSeconds: Int =
     warmup.duration + rampUp.duration + plateau.duration + rampDown.duration
@@ -41,8 +41,6 @@ case class RampConfig(fromUsers: Int, toUsers: Int, duration: Int)
 @JsonIgnoreProperties(ignoreUnknown = true)
 case class PlateauConfig(users: Int, duration: Int)
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-case class RampDownConfig(fromUsers: Int, toUsers: Int, duration: Int)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 case class ScenarioConfig(

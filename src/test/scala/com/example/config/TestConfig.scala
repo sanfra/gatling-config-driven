@@ -89,7 +89,7 @@ object TestConfig {
     if (overrides.isEmpty) return config
     val result = new java.util.LinkedHashMap[String, Any](config)
     overrides.foreach { case (path, value) =>
-      setNested(result, path.split("\."), value)
+      setNested(result, path.split("\\."), value)
       println(s"[Config] Override: $path = $value")
     }
     result
